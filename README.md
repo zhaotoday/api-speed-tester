@@ -295,8 +295,7 @@ const apiTester = new ApiSpeedTester({
     'api-asia.example.com'
   ],
   testPath: '/api/v1/ping',
-  expectedResponse: { status: 'ok' },
-  concurrent: true
+  expectedResponse: { status: 'ok' }
 });
 
 const bestApi = await apiTester.getBestRoute();

@@ -153,7 +153,7 @@ export class ApiSpeedTester {
   }
 
   /**
-   * 并发测试所有 API（原有方法保持兼容性）
+   * 并发测试所有 API
    *
    * @returns 所有测试结果
    */
@@ -168,7 +168,7 @@ export class ApiSpeedTester {
    * @returns 测试结果，按响应时间排序
    */
   async test(): Promise<ApiTestResult[]> {
-    console.log(`🚀 开始并发测试 ${this.config.domains.length} 个 API 线路...`);
+    console.log(`🚀 开始测试 ${this.config.domains.length} 个 API 线路...`);
     console.log(`📍 测试路径: ${this.config.testPath}`);
     console.log(`⏱️  超时时间: ${this.config.timeout}ms`);
 
@@ -194,7 +194,7 @@ export class ApiSpeedTester {
     fastest: ApiTestResult | null;
     allResults: Promise<ApiTestResult[]>;
   }> {
-    console.log(`🚀 开始并发测试 ${this.config.domains.length} 个 API 线路...`);
+    console.log(`🚀 开始测试 ${this.config.domains.length} 个 API 线路...`);
     console.log(`📍 测试路径: ${this.config.testPath}`);
     console.log(`⏱️  超时时间: ${this.config.timeout}ms`);
 

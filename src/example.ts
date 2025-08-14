@@ -2,14 +2,37 @@ import { ApiSpeedTester } from "./api-speed-tester.js";
 import { ApiTestConfig } from "./types.js";
 
 /**
- * 使用示例
+ * API 速度测试示例
  */
 async function runExample() {
   console.log("🎯 API 线路速度测试示例\n");
 
-  // 示例配置 1：测试 JSON API
-  const config1: ApiTestConfig = {
-    domains: ["jsonplaceholder.typicode.com", "httpbin.org", "api.github.com"],
+  // 示例 1：基本测试 - 获取最快线路
+  await basicExample();
+  
+  console.log("\n" + "=".repeat(80) + "\n");
+  
+  // 示例 2：最快结果立即返回，其他线路继续测试
+  await fastestFirstExample();
+  
+  console.log("\n" + "=".repeat(80) + "\n");
+  
+  // 示例 3：使用回调函数的测试
+  await callbackExample();
+}
+
+/**
+ * 示例 1：基本测试 - 获取最快线路
+ */
+async function basicExample() {
+  console.log("📋 示例 1: 基本测试 - 获取最快线路");
+  
+  const config: ApiTestConfig = {
+    domains: [
+      "jsonplaceholder.typicode.com", 
+      "httpbin.org", 
+      "api.github.com"
+    ],
     testPath: "/users/1",
     expectedResponse: {
       id: 1,
@@ -18,106 +41,103 @@ async function runExample() {
       email: "Sincere@april.biz",
     },
     timeout: 3000,
-    concurrent: true,
   };
-
-  console.log("📋 测试配置 1: JSONPlaceholder API");
-  const tester1 = new ApiSpeedTester(config1);
+  
+  const tester = new ApiSpeedTester(config);
 
   try {
-    const bestRoute1 = await tester1.getBestRoute();
-    if (bestRoute1) {
-      console.log(
-        `\n🎯 推荐使用: https://${bestRoute1.domain}${config1.testPath}`,
-      );
+    // 获取最优线路（等待所有测试完成后返回最快的）
+    const bestRoute = await tester.getBestRoute();
+    
+    if (bestRoute) {
+      console.log(`\n🏆 最优线路: ${bestRoute.domain}`);
+      console.log(`⏱️ 响应时间: ${bestRoute.responseTime}ms`);
+      console.log(`🔗 完整地址: https://${bestRoute.domain}${config.testPath}`);
     }
   } catch (error) {
     console.error("❌ 测试失败:", error);
   }
+}
 
-  console.log("\n" + "=".repeat(80) + "\n");
+/**
+ * 示例 2：最快结果立即返回，其他线路继续测试
+ */
+async function fastestFirstExample() {
+  console.log("📋 示例 2: 最快结果立即返回，其他线路继续测试");
+  
+  const tester = new ApiSpeedTester({
+    domains: [
+      "jsonplaceholder.typicode.com",
+      "httpbin.org",
+      "api.github.com",
+      "reqres.in"
+    ],
+    testPath: "/users/1",
+    expectedResponse: { id: 1 }, // 简化的期望响应
+    timeout: 5000
+  });
 
-  // 示例配置 2：测试简单健康检查
-  const config2: ApiTestConfig = {
-    domains: ["httpbin.org", "jsonplaceholder.typicode.com"],
-    testPath: "/status/200",
-    expectedResponse: {},
-    timeout: 2000,
-    concurrent: false, // 串行测试
-  };
+  // 使用新的测试方法 - 最快结果立即返回
+  const { fastest, allResults } = await tester.getBestRouteWithContinuousTesting();
 
-  console.log("📋 测试配置 2: 健康检查 API (串行测试)");
-  const tester2 = new ApiSpeedTester(config2);
-
-  try {
-    const results = await tester2.test();
-    const successCount = results.filter((r) => r.success).length;
-    console.log(
-      `\n📈 成功率: ${successCount}/${results.length} (${Math.round((successCount / results.length) * 100)}%)`,
-    );
-  } catch (error) {
-    console.error("❌ 测试失败:", error);
+  if (fastest) {
+    console.log(`\n⚡ 立即可用的最快线路: ${fastest.domain}`);
+    console.log(`⏱️ 响应时间: ${fastest.responseTime}ms`);
+    console.log("✅ 可以立即开始使用此线路进行后续请求");
+    
+    // 这里可以立即开始使用最快的线路
+    console.log("🚀 开始使用最快线路处理业务请求...");
+  } else {
+    console.log("❌ 没有找到可用的线路");
   }
 
-  console.log("\n" + "=".repeat(80) + "\n");
+  // 等待所有测试完成，获取完整排序结果
+  console.log("\n⏳ 等待所有线路测试完成...");
+  const sortedResults = await allResults;
 
-  // 示例配置 3：自定义期望响应
-  const config3: ApiTestConfig = {
-    domains: ["httpbin.org"],
-    testPath: "/json",
-    expectedResponse: {
-      slideshow: {
-        author: "Yours Truly",
-        date: "date of publication",
-        slides: [
-          {
-            title: "Wake up to WonderWidgets!",
-            type: "all",
-          },
-          {
-            items: [
-              "Why <em>WonderWidgets</em> are great",
-              "Who <em>buys</em> WonderWidgets",
-            ],
-            title: "Overview",
-            type: "all",
-          },
-        ],
-        title: "Sample Slide Show",
-      },
-    },
-    timeout: 5000,
-    headers: {
-      "User-Agent": "API-Speed-Tester/1.0",
-      Accept: "application/json",
-    },
-  };
+  console.log("\n📊 最终完整测速结果（按响应时间排序）:");
+  sortedResults.forEach((result, index) => {
+    const status = result.success ? "✅" : "❌";
+    const time = result.success ? `${result.responseTime}ms` : "失败";
+    console.log(`${index + 1}. ${status} ${result.domain} - ${time}`);
+  });
+}
 
-  console.log("📋 测试配置 3: 自定义响应验证");
-  const tester3 = new ApiSpeedTester(config3);
+/**
+ * 示例 3：使用回调函数的测试
+ */
+async function callbackExample() {
+  console.log("📋 示例 3: 使用回调函数的测试");
+  
+  const tester = new ApiSpeedTester({
+    domains: [
+      "jsonplaceholder.typicode.com",
+      "httpbin.org",
+      "api.github.com"
+    ],
+    testPath: "/users",
+    expectedResponse: [], // 期望数组响应
+    timeout: 3000
+  });
 
-  try {
-    const bestRoute3 = await tester3.getBestRoute();
-    if (bestRoute3) {
-      console.log(
-        `\n🎯 推荐使用: https://${bestRoute3.domain}${config3.testPath}`,
-      );
-      console.log(
-        `📊 响应数据预览:`,
-        JSON.stringify(bestRoute3.data, null, 2).substring(0, 200) + "...",
-      );
-    }
-  } catch (error) {
-    console.error("❌ 测试失败:", error);
-  }
+  // 使用带回调的测试方法
+  const result = await tester.testConcurrentWithFastest((fastestResult) => {
+    console.log(`\n🔥 检测到最快线路: ${fastestResult.domain} (${fastestResult.responseTime}ms)`);
+    console.log("💡 可以在这里立即开始使用此线路...");
+    
+    // 在回调中处理最快结果
+    // handleFastestRoute(fastestResult.domain);
+  });
+
+  console.log("\n📈 测试完成统计:");
+  console.log(`- 最快线路: ${result.fastest?.domain || "无"}`);
+  console.log(`- 完成数量: ${result.completedCount}/${result.totalCount}`);
+  console.log(`- 成功线路: ${result.allResults.filter(r => r.success).length} 个`);
 }
 
 // 运行示例
-if (
-  typeof process !== "undefined" &&
-  import.meta.url === `file://${process.argv[1]}`
-) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   runExample().catch(console.error);
 }
 
-export { runExample };
+export { runExample, basicExample, fastestFirstExample, callbackExample };
