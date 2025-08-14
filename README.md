@@ -200,4 +200,4 @@ api-speed-tester/
 
 如有问题或建议，请：
 - 提交 [Issue](https://github.com/codebuddy/api-speed-tester/issues)
-- 发送邮件至 codebuddy@example.com
+- 发送邮件至 6421664@qq.com
