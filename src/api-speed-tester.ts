@@ -12,7 +12,7 @@ import { ApiTestResult, ApiTestConfig } from "./types.js";
  *   expectedResponse: { success: true }
  * });
  *
- * const { fastest, allResults } = await tester.getBestRouteWithContinuousTesting();
+ * const { fastest, allResults } = await tester.getBestRoute();
  * ```
  */
 export class ApiSpeedTester {

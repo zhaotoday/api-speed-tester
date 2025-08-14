@@ -1,5 +1,4 @@
-import { ApiSpeedTester } from "./api-speed-tester.js";
-import { ApiTestConfig } from "./types.js";
+import {ApiSpeedTester} from "./api-speed-tester.js";
 
 /**
  * API 速度测试示例
