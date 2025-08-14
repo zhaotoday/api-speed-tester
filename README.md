@@ -53,10 +53,13 @@ const tester = new ApiSpeedTester({
   timeout: 5000
 });
 
-// 获取最优线路
-const bestRoute = await tester.getBestRoute();
-if (bestRoute) {
-  console.log(`最优线路: ${bestRoute.domain} (${bestRoute.responseTime}ms)`);
+// 最快线路成功后立即返回，其他线路继续测试
+const { fastest, allResults } = await tester.getBestRoute();
+
+if (fastest) {
+  console.log(`⚡ 最快线路: ${fastest.domain} (${fastest.responseTime}ms)`);
+  // 立即开始使用最快线路处理业务请求
+  startUsingFastestRoute(fastest.domain);
 }
 ```
 
@@ -72,7 +75,7 @@ const tester = new ApiSpeedTester({
 });
 
 // 最快线路成功后立即返回，其他线路继续测试
-const { fastest, allResults } = await tester.getBestRouteWithContinuousTesting();
+const { fastest, allResults } = await tester.getBestRoute();
 
 if (fastest) {
   console.log(`⚡ 最快线路: ${fastest.domain} (${fastest.responseTime}ms)`);
@@ -85,19 +88,6 @@ const sortedResults = await allResults;
 console.log('📊 所有结果按响应时间排序:', sortedResults);
 ```
 
-### 使用回调函数的并发测试
-
-```typescript
-// 使用回调函数在最快结果出现时立即处理
-const result = await tester.testConcurrentWithFastest((fastestResult) => {
-  console.log(`检测到最快线路: ${fastestResult.domain}`);
-  // 在这里可以立即开始使用此线路
-  handleFastestRoute(fastestResult);
-});
-
-console.log(`完成统计: ${result.completedCount}/${result.totalCount}`);
-console.log('所有结果:', result.allResults);
-```
 
 ### 使用便捷函数
 
@@ -110,7 +100,7 @@ const tester = createApiTester({
   expectedResponse: { success: true }
 });
 
-const bestRoute = await tester.getBestRoute();
+const { fastest, allResults } = await tester.getBestRouteWithContinuousTesting();
 ```
 
 ### 高级配置
@@ -135,12 +125,17 @@ const config: ApiTestConfig = {
 
 const tester = new ApiSpeedTester(config);
 
-// 获取所有测试结果
-const results = await tester.test();
-console.log('所有测试结果:', results);
+// 获取最快线路和所有测试结果
+const { fastest, allResults } = await tester.getBestRoute();
 
-// 获取最优线路
-const bestRoute = await tester.getBestRoute();
+// 使用最快线路
+if (fastest) {
+  console.log(`最快线路: ${fastest.domain}`);
+}
+
+// 等待所有测试完成
+const results = await allResults;
+console.log('所有测试结果:', results);
 ```
 
 ## 📋 API 文档
@@ -169,16 +164,6 @@ const bestRoute = await tester.getBestRoute();
 | `data` | `any` | 响应数据（成功时） |
 | `error` | `string` | 错误信息（失败时） |
 
-### ConcurrentTestResult
-
-并发测试结果接口，包含最快结果和完整统计信息。
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `fastest` | `ApiTestResult \| null` | 最快的成功结果 |
-| `allResults` | `ApiTestResult[]` | 所有结果按响应时间排序 |
-| `completedCount` | `number` | 完成的测试数量 |
-| `totalCount` | `number` | 总测试数量 |
 
 ### ApiSpeedTester 类
 
@@ -192,36 +177,12 @@ constructor(config: ApiTestConfig)
 
 #### 方法
 
-##### `test(): Promise<ApiTestResult[]>`
-
-执行 API 速度测试，返回所有测试结果（按响应时间排序）。
-
-```typescript
-const results = await tester.test();
-results.forEach(result => {
-  console.log(`${result.domain}: ${result.responseTime}ms`);
-});
-```
-
-##### `getBestRoute(): Promise<ApiTestResult | null>`
-
-获取最优线路，返回响应最快且内容正确的 API 结果。
-
-```typescript
-const bestRoute = await tester.getBestRoute();
-if (bestRoute) {
-  console.log(`推荐使用: https://${bestRoute.domain}`);
-} else {
-  console.log('没有找到可用的 API 线路');
-}
-```
-
-##### `getBestRouteWithContinuousTesting(): Promise<{ fastest: ApiTestResult | null, allResults: Promise<ApiTestResult[]> }>`
+##### `getBestRoute(): Promise<{ fastest: ApiTestResult | null, allResults: Promise<ApiTestResult[]> }>`
 
 并发测试所有线路，最快成功的线路立即返回，其他线路继续测试。返回最快结果和所有结果的 Promise。
 
 ```typescript
-const { fastest, allResults } = await tester.getBestRouteWithContinuousTesting();
+const { fastest, allResults } = await tester.getBestRoute();
 
 if (fastest) {
   console.log(`⚡ 最快线路: ${fastest.domain} (${fastest.responseTime}ms)`);
@@ -234,21 +195,6 @@ const sortedResults = await allResults;
 console.log('完整测试结果:', sortedResults);
 ```
 
-##### `testConcurrentWithFastest(onFastestResult?: (result: ApiTestResult) => void): Promise<ConcurrentTestResult>`
-
-并发测试所有 API，支持回调函数在最快结果出现时立即处理。
-
-```typescript
-const result = await tester.testConcurrentWithFastest((fastestResult) => {
-  console.log(`检测到最快线路: ${fastestResult.domain}`);
-  // 立即处理最快结果
-  handleFastestRoute(fastestResult);
-});
-
-console.log(`测试统计: ${result.completedCount}/${result.totalCount}`);
-console.log('最快线路:', result.fastest);
-console.log('所有结果:', result.allResults);
-```
 
 ### 便捷函数
 
@@ -268,80 +214,36 @@ const tester = createApiTester({
 
 ## 🎯 使用场景
 
-### CDN 选择
-
-```typescript
-const cdnTester = new ApiSpeedTester({
-  domains: [
-    'cdn1.example.com',
-    'cdn2.example.com',
-    'cdn3.example.com'
-  ],
-  testPath: '/static/test.json',
-  expectedResponse: { version: '1.0' },
-  timeout: 3000
-});
-
-const fastestCdn = await cdnTester.getBestRoute();
-```
-
-### API 负载均衡
+### API 测速
 
 ```typescript
 const apiTester = new ApiSpeedTester({
   domains: [
-    'api-us.example.com',
-    'api-eu.example.com',
-    'api-asia.example.com'
+    'api1.example.com',
+    'api2.example.com',
+    'api3.example.com'
   ],
   testPath: '/api/v1/ping',
-  expectedResponse: { status: 'ok' }
+  expectedResponse: { status: 'ok' },
+  timeout: 3000
 });
 
-const bestApi = await apiTester.getBestRoute();
-```
+// 获取最快线路，同时继续测试其他线路
+const { fastest, allResults } = await apiTester.getBestRoute();
 
-### 服务健康检查
+// 立即使用最快线路
+if (fastest) {
+  console.log(`⚡ 最快线路: ${fastest.domain} (${fastest.responseTime}ms)`);
+  // 使用最快的线路处理业务请求
+  useApiEndpoint(fastest.domain);
+}
 
-```typescript
-const healthTester = new ApiSpeedTester({
-  domains: [
-    'service1.internal',
-    'service2.internal',
-    'service3.internal'
-  ],
-  testPath: '/health',
-  expectedResponse: { healthy: true },
-  timeout: 2000
+// 等待所有测试完成，获取完整排序结果
+const results = await allResults;
+console.log('📊 所有线路测速结果:');
+results.forEach((result, index) => {
+  console.log(`${index + 1}. ${result.domain}: ${result.responseTime}ms`);
 });
-
-const results = await healthTester.test();
-const healthyServices = results.filter(r => r.success);
-console.log(`健康服务数量: ${healthyServices.length}/${results.length}`);
-```
-
-### 网络质量监控
-
-```typescript
-const networkTester = new ApiSpeedTester({
-  domains: [
-    'ping.example.com',
-    'test.example.com'
-  ],
-  testPath: '/ping',
-  expectedResponse: { timestamp: expect.any(Number) },
-  timeout: 5000
-});
-
-// 定期监控
-setInterval(async () => {
-  const results = await networkTester.test();
-  const avgResponseTime = results
-    .filter(r => r.success)
-    .reduce((sum, r) => sum + r.responseTime, 0) / results.length;
-  
-  console.log(`平均响应时间: ${avgResponseTime.toFixed(2)}ms`);
-}, 60000); // 每分钟检查一次
 ```
 
 ## 🔧 开发

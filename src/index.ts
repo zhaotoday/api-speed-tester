@@ -5,10 +5,10 @@
  */
 
 import { ApiSpeedTester } from './api-speed-tester.js';
-import type { ApiTestResult, ApiTestConfig, ConcurrentTestResult } from './types.js';
+import type { ApiTestResult, ApiTestConfig } from './types.js';
 
 export { ApiSpeedTester } from './api-speed-tester.js';
-export type { ApiTestResult, ApiTestConfig, ConcurrentTestResult } from './types.js';
+export type { ApiTestResult, ApiTestConfig } from './types.js';
 
 /**
  * 创建 API 速度测试器的便捷函数
@@ -26,7 +26,7 @@ export type { ApiTestResult, ApiTestConfig, ConcurrentTestResult } from './types
  *   expectedResponse: { status: 'ok' }
  * });
  * 
- * const bestRoute = await tester.getBestRoute();
+ * const { fastest, allResults } = await tester.getBestRoute();
  * ```
  */
 export function createApiTester(config: ApiTestConfig): ApiSpeedTester {

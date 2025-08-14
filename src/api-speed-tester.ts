@@ -12,7 +12,7 @@ import { ApiTestResult, ApiTestConfig } from "./types.js";
  *   expectedResponse: { success: true }
  * });
  *
- * const bestRoute = await tester.getBestRoute();
+ * const { fastest, allResults } = await tester.getBestRouteWithContinuousTesting();
  * ```
  */
 export class ApiSpeedTester {
@@ -105,44 +105,11 @@ export class ApiSpeedTester {
   }
 
   /**
-   * 执行 API 速度测试
-   *
-   * @returns 测试结果，按响应时间排序
-   */
-  async test(): Promise<ApiTestResult[]> {
-    console.log(`🚀 开始测试 ${this.config.domains.length} 个 API 线路...`);
-    console.log(`📍 测试路径: ${this.config.testPath}`);
-    console.log(`⏱️  超时时间: ${this.config.timeout}ms`);
-
-    const results: ApiTestResult[] = [];
-    
-    // 创建所有测试 Promise
-    const promises = this.config.domains.map(async (domain) => {
-      const result = await this.testSingleApi(domain);
-      results.push(result);
-      return result;
-    });
-
-    // 等待所有测试完成
-    await Promise.allSettled(promises);
-
-    // 按响应时间排序，成功的排在前面
-    results.sort((a, b) => {
-      if (a.success && !b.success) return -1;
-      if (!a.success && b.success) return 1;
-      return a.responseTime - b.responseTime;
-    });
-
-    this.printResults(results);
-    return results;
-  }
-
-  /**
    * 获取最优线路 - 最快成功后立即返回，其他线路继续测试
    *
    * @returns Promise<{ fastest: ApiTestResult | null, allResults: Promise<ApiTestResult[]> }>
    */
-  async getBestRouteWithContinuousTesting(): Promise<{
+  async getBestRoute(): Promise<{
     fastest: ApiTestResult | null;
     allResults: Promise<ApiTestResult[]>;
   }> {
@@ -199,27 +166,6 @@ export class ApiSpeedTester {
       fastest: await fastestPromise,
       allResults: allResultsPromise
     };
-  }
-
-  /**
-   * 获取最优线路
-   *
-   * @returns 最优线路结果，如果没有可用线路则返回 null
-   */
-  async getBestRoute(): Promise<ApiTestResult | null> {
-    const results = await this.test();
-    const successResults = results.filter((r) => r.success);
-
-    if (successResults.length === 0) {
-      console.log("❌ 没有找到可用的 API 线路");
-      return null;
-    }
-
-    const bestRoute = successResults[0];
-    console.log(
-      `🏆 最优线路: ${bestRoute.domain} (${bestRoute.responseTime}ms)`,
-    );
-    return bestRoute;
   }
 
   /**

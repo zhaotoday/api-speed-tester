@@ -7,63 +7,15 @@ import { ApiTestConfig } from "./types.js";
 async function runExample() {
   console.log("🎯 API 线路速度测试示例\n");
 
-  // 示例 1：基本测试 - 获取最快线路
-  await basicExample();
-  
-  console.log("\n" + "=".repeat(80) + "\n");
-  
-  // 示例 2：最快结果立即返回，其他线路继续测试
-  await fastestFirstExample();
-  
-  console.log("\n" + "=".repeat(80) + "\n");
-  
-  // 示例 3：使用回调函数的测试
-  await callbackExample();
+  // 最快结果立即返回，其他线路继续测试
+  await speedTestExample();
 }
 
 /**
- * 示例 1：基本测试 - 获取最快线路
+ * 最快结果立即返回，其他线路继续测试
  */
-async function basicExample() {
-  console.log("📋 示例 1: 基本测试 - 获取最快线路");
-  
-  const config: ApiTestConfig = {
-    domains: [
-      "jsonplaceholder.typicode.com", 
-      "httpbin.org", 
-      "api.github.com"
-    ],
-    testPath: "/users/1",
-    expectedResponse: {
-      id: 1,
-      name: "Leanne Graham",
-      username: "Bret",
-      email: "Sincere@april.biz",
-    },
-    timeout: 3000,
-  };
-  
-  const tester = new ApiSpeedTester(config);
-
-  try {
-    // 获取最优线路（等待所有测试完成后返回最快的）
-    const bestRoute = await tester.getBestRoute();
-    
-    if (bestRoute) {
-      console.log(`\n🏆 最优线路: ${bestRoute.domain}`);
-      console.log(`⏱️ 响应时间: ${bestRoute.responseTime}ms`);
-      console.log(`🔗 完整地址: https://${bestRoute.domain}${config.testPath}`);
-    }
-  } catch (error) {
-    console.error("❌ 测试失败:", error);
-  }
-}
-
-/**
- * 示例 2：最快结果立即返回，其他线路继续测试
- */
-async function fastestFirstExample() {
-  console.log("📋 示例 2: 最快结果立即返回，其他线路继续测试");
+async function speedTestExample() {
+  console.log("📋 API 速度测试 - 最快结果立即返回");
   
   const tester = new ApiSpeedTester({
     domains: [
@@ -77,8 +29,8 @@ async function fastestFirstExample() {
     timeout: 5000
   });
 
-  // 使用新的测试方法 - 最快结果立即返回
-  const { fastest, allResults } = await tester.getBestRouteWithContinuousTesting();
+  // 使用测试方法 - 最快结果立即返回
+  const { fastest, allResults } = await tester.getBestRoute();
 
   if (fastest) {
     console.log(`\n⚡ 立即可用的最快线路: ${fastest.domain}`);
@@ -103,41 +55,9 @@ async function fastestFirstExample() {
   });
 }
 
-/**
- * 示例 3：使用回调函数的测试
- */
-async function callbackExample() {
-  console.log("📋 示例 3: 使用回调函数的测试");
-  
-  const tester = new ApiSpeedTester({
-    domains: [
-      "jsonplaceholder.typicode.com",
-      "httpbin.org",
-      "api.github.com"
-    ],
-    testPath: "/users",
-    expectedResponse: [], // 期望数组响应
-    timeout: 3000
-  });
-
-  // 使用带回调的测试方法
-  const result = await tester.testConcurrentWithFastest((fastestResult) => {
-    console.log(`\n🔥 检测到最快线路: ${fastestResult.domain} (${fastestResult.responseTime}ms)`);
-    console.log("💡 可以在这里立即开始使用此线路...");
-    
-    // 在回调中处理最快结果
-    // handleFastestRoute(fastestResult.domain);
-  });
-
-  console.log("\n📈 测试完成统计:");
-  console.log(`- 最快线路: ${result.fastest?.domain || "无"}`);
-  console.log(`- 完成数量: ${result.completedCount}/${result.totalCount}`);
-  console.log(`- 成功线路: ${result.allResults.filter(r => r.success).length} 个`);
-}
-
 // 运行示例
 if (import.meta.url === `file://${process.argv[1]}`) {
   runExample().catch(console.error);
 }
 
-export { runExample, basicExample, fastestFirstExample, callbackExample };
+export { runExample, speedTestExample };
