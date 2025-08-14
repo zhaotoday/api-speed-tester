@@ -1,20 +1,10 @@
-import {ApiSpeedTester} from "./api-speed-tester.js";
+import { ApiSpeedTester } from "./api-speed-tester.js";
 
 /**
  * API 速度测试示例
  */
 async function runExample() {
   console.log("🎯 API 线路速度测试示例\n");
-
-  // 最快结果立即返回，其他线路继续测试
-  await speedTestExample();
-}
-
-/**
- * 最快结果立即返回，其他线路继续测试
- */
-async function speedTestExample() {
-  console.log("📋 API 速度测试 - 最快结果立即返回");
   
   const tester = new ApiSpeedTester({
     domains: [
@@ -59,4 +49,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   runExample().catch(console.error);
 }
 
-export { runExample, speedTestExample };
+export { runExample };

@@ -48,30 +48,9 @@ const tester = new ApiSpeedTester({
     'api2.example.com',
     'api3.example.com'
   ],
-  testPath: '/health',
-  expectedResponse: { status: 'ok' },
-  timeout: 5000
-});
-
-// 最快线路成功后立即返回，其他线路继续测试
-const { fastest, allResults } = await tester.getBestRoute();
-
-if (fastest) {
-  console.log(`⚡ 最快线路: ${fastest.domain} (${fastest.responseTime}ms)`);
-  // 立即开始使用最快线路处理业务请求
-  startUsingFastestRoute(fastest.domain);
-}
-```
-
-### 并发测速 - 最快结果立即返回
-
-```typescript
-import { ApiSpeedTester } from 'api-speed-tester';
-
-const tester = new ApiSpeedTester({
-  domains: ['api1.example.com', 'api2.example.com', 'api3.example.com'],
   testPath: '/api/test',
-  expectedResponse: { success: true }
+  expectedResponse: { success: true },
+  timeout: 5000
 });
 
 // 最快线路成功后立即返回，其他线路继续测试
@@ -88,20 +67,6 @@ const sortedResults = await allResults;
 console.log('📊 所有结果按响应时间排序:', sortedResults);
 ```
 
-
-### 使用便捷函数
-
-```typescript
-import { createApiTester } from 'api-speed-tester';
-
-const tester = createApiTester({
-  domains: ['cdn1.example.com', 'cdn2.example.com'],
-  testPath: '/api/test.json',
-  expectedResponse: { success: true }
-});
-
-const { fastest, allResults } = await tester.getBestRouteWithContinuousTesting();
-```
 
 ### 高级配置
 
