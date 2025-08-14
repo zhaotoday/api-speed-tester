@@ -28,7 +28,7 @@ export class ApiSpeedTester {
       timeout: 5000,
       headers: { "Content-Type": "application/json" },
       ...config,
-    };
+    } as Required<ApiTestConfig>;
   }
 
   /**
