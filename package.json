@@ -1,6 +1,6 @@
 {
   "name": "api-speed-tester",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "一个用于测试多个 API 域名响应速度的 TypeScript 工具，帮助选择最快的 API 线路",
   "main": "dist/index.js",
   "module": "dist/index.js",
