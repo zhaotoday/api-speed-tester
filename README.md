@@ -68,41 +68,6 @@ console.log('📊 所有结果按响应时间排序:', sortedResults);
 ```
 
 
-### 高级配置
-
-```typescript
-import { ApiSpeedTester, ApiTestConfig } from 'api-speed-tester';
-
-const config: ApiTestConfig = {
-  domains: ['api1.example.com', 'api2.example.com'],
-  testPath: '/api/v1/status',
-  expectedResponse: { 
-    status: 'healthy',
-    version: '1.0.0'
-  },
-  timeout: 3000,
-  headers: {
-    'Authorization': 'Bearer your-token',
-    'User-Agent': 'MyApp/1.0',
-    'Accept': 'application/json'
-  }
-};
-
-const tester = new ApiSpeedTester(config);
-
-// 获取最快线路和所有测试结果
-const { fastest, allResults } = await tester.getBestRoute();
-
-// 使用最快线路
-if (fastest) {
-  console.log(`最快线路: ${fastest.domain}`);
-}
-
-// 等待所有测试完成
-const results = await allResults;
-console.log('所有测试结果:', results);
-```
-
 ## 📋 API 文档
 
 ### ApiTestConfig
@@ -161,21 +126,6 @@ console.log('完整测试结果:', sortedResults);
 ```
 
 
-### 便捷函数
-
-#### `createApiTester(config: ApiTestConfig): ApiSpeedTester`
-
-创建 API 速度测试器的便捷函数。
-
-```typescript
-import { createApiTester } from '@codebuddy/api-speed-tester';
-
-const tester = createApiTester({
-  domains: ['api1.com', 'api2.com'],
-  testPath: '/ping',
-  expectedResponse: { pong: true }
-});
-```
 
 ## 🎯 使用场景
 
