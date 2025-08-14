@@ -127,39 +127,6 @@ console.log('完整测试结果:', sortedResults);
 
 
 
-## 🎯 使用场景
-
-### API 测速
-
-```typescript
-const apiTester = new ApiSpeedTester({
-  domains: [
-    'api1.example.com',
-    'api2.example.com',
-    'api3.example.com'
-  ],
-  testPath: '/api/v1/ping',
-  expectedResponse: { status: 'ok' },
-  timeout: 3000
-});
-
-// 获取最快线路，同时继续测试其他线路
-const { fastest, allResults } = await apiTester.getBestRoute();
-
-// 立即使用最快线路
-if (fastest) {
-  console.log(`⚡ 最快线路: ${fastest.domain} (${fastest.responseTime}ms)`);
-  // 使用最快的线路处理业务请求
-  useApiEndpoint(fastest.domain);
-}
-
-// 等待所有测试完成，获取完整排序结果
-const results = await allResults;
-console.log('📊 所有线路测速结果:');
-results.forEach((result, index) => {
-  console.log(`${index + 1}. ${result.domain}: ${result.responseTime}ms`);
-});
-```
 
 ## 🔧 开发
 
