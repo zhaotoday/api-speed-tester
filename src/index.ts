@@ -5,10 +5,10 @@
  */
 
 import { ApiSpeedTester } from './api-speed-tester.js';
-import type { ApiTestResult, ApiTestConfig } from './types.js';
+import type { ApiTestResult, ApiTestConfig, ConcurrentTestResult } from './types.js';
 
 export { ApiSpeedTester } from './api-speed-tester.js';
-export type { ApiTestResult, ApiTestConfig } from './types.js';
+export type { ApiTestResult, ApiTestConfig, ConcurrentTestResult } from './types.js';
 
 /**
  * 创建 API 速度测试器的便捷函数

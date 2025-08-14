@@ -8,7 +8,8 @@
 
 ## ✨ 特性
 
-- 🚀 **并发/串行测试**: 支持同时测试多个 API 或按顺序测试
+- 🚀 **并发测试**: 同时测试多个 API，最快结果立即返回
+- ⚡ **即时响应**: 最快成功的 API 立即可用，其他继续测试
 - ⏱️ **响应时间测量**: 精确测量每个 API 的响应时间
 - ✅ **内容验证**: 验证响应内容是否符合期望
 - ⏰ **超时控制**: 可配置超时时间，避免长时间等待
@@ -59,6 +60,45 @@ if (bestRoute) {
 }
 ```
 
+### 并发测速 - 最快结果立即返回
+
+```typescript
+import { ApiSpeedTester } from 'api-speed-tester';
+
+const tester = new ApiSpeedTester({
+  domains: ['api1.example.com', 'api2.example.com', 'api3.example.com'],
+  testPath: '/api/test',
+  expectedResponse: { success: true }
+});
+
+// 最快线路成功后立即返回，其他线路继续测试
+const { fastest, allResults } = await tester.getBestRouteWithContinuousTesting();
+
+if (fastest) {
+  console.log(`⚡ 最快线路: ${fastest.domain} (${fastest.responseTime}ms)`);
+  // 立即开始使用最快线路处理业务请求
+  startUsingFastestRoute(fastest.domain);
+}
+
+// 等待所有测试完成，获取完整排序结果
+const sortedResults = await allResults;
+console.log('📊 所有结果按响应时间排序:', sortedResults);
+```
+
+### 使用回调函数的并发测试
+
+```typescript
+// 使用回调函数在最快结果出现时立即处理
+const result = await tester.testConcurrentWithFastest((fastestResult) => {
+  console.log(`检测到最快线路: ${fastestResult.domain}`);
+  // 在这里可以立即开始使用此线路
+  handleFastestRoute(fastestResult);
+});
+
+console.log(`完成统计: ${result.completedCount}/${result.totalCount}`);
+console.log('所有结果:', result.allResults);
+```
+
 ### 使用便捷函数
 
 ```typescript
@@ -86,7 +126,6 @@ const config: ApiTestConfig = {
     version: '1.0.0'
   },
   timeout: 3000,
-  concurrent: false, // 串行测试
   headers: {
     'Authorization': 'Bearer your-token',
     'User-Agent': 'MyApp/1.0',
@@ -116,7 +155,6 @@ const bestRoute = await tester.getBestRoute();
 | `testPath` | `string` | ✅ | - | 测试路径（如 `/health`） |
 | `expectedResponse` | `any` | ✅ | - | 期望的响应内容 |
 | `timeout` | `number` | ❌ | `5000` | 超时时间（毫秒） |
-| `concurrent` | `boolean` | ❌ | `true` | 是否并发测试 |
 | `headers` | `Record<string, string>` | ❌ | `{}` | 自定义请求头 |
 
 ### ApiTestResult
@@ -130,6 +168,17 @@ const bestRoute = await tester.getBestRoute();
 | `success` | `boolean` | 是否测试成功 |
 | `data` | `any` | 响应数据（成功时） |
 | `error` | `string` | 错误信息（失败时） |
+
+### ConcurrentTestResult
+
+并发测试结果接口，包含最快结果和完整统计信息。
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `fastest` | `ApiTestResult \| null` | 最快的成功结果 |
+| `allResults` | `ApiTestResult[]` | 所有结果按响应时间排序 |
+| `completedCount` | `number` | 完成的测试数量 |
+| `totalCount` | `number` | 总测试数量 |
 
 ### ApiSpeedTester 类
 
@@ -165,6 +214,40 @@ if (bestRoute) {
 } else {
   console.log('没有找到可用的 API 线路');
 }
+```
+
+##### `getBestRouteWithContinuousTesting(): Promise<{ fastest: ApiTestResult | null, allResults: Promise<ApiTestResult[]> }>`
+
+并发测试所有线路，最快成功的线路立即返回，其他线路继续测试。返回最快结果和所有结果的 Promise。
+
+```typescript
+const { fastest, allResults } = await tester.getBestRouteWithContinuousTesting();
+
+if (fastest) {
+  console.log(`⚡ 最快线路: ${fastest.domain} (${fastest.responseTime}ms)`);
+  // 立即开始使用最快线路
+  startUsingRoute(fastest.domain);
+}
+
+// 等待所有测试完成
+const sortedResults = await allResults;
+console.log('完整测试结果:', sortedResults);
+```
+
+##### `testConcurrentWithFastest(onFastestResult?: (result: ApiTestResult) => void): Promise<ConcurrentTestResult>`
+
+并发测试所有 API，支持回调函数在最快结果出现时立即处理。
+
+```typescript
+const result = await tester.testConcurrentWithFastest((fastestResult) => {
+  console.log(`检测到最快线路: ${fastestResult.domain}`);
+  // 立即处理最快结果
+  handleFastestRoute(fastestResult);
+});
+
+console.log(`测试统计: ${result.completedCount}/${result.totalCount}`);
+console.log('最快线路:', result.fastest);
+console.log('所有结果:', result.allResults);
 ```
 
 ### 便捷函数
@@ -230,8 +313,7 @@ const healthTester = new ApiSpeedTester({
   ],
   testPath: '/health',
   expectedResponse: { healthy: true },
-  timeout: 2000,
-  concurrent: false // 串行检查，避免同时压测
+  timeout: 2000
 });
 
 const results = await healthTester.test();
