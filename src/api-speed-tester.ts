@@ -138,7 +138,7 @@ export class ApiSpeedTester {
     await Promise.allSettled(promises);
 
     // 按响应时间排序，成功的排在前面
-    const sortedResults = results.sort((a, b) => {
+    results.sort((a, b) => {
       if (a.success && !b.success) return -1;
       if (!a.success && b.success) return 1;
       return a.responseTime - b.responseTime;
@@ -146,7 +146,7 @@ export class ApiSpeedTester {
 
     return {
       fastest,
-      allResults: sortedResults,
+      allResults: results,
       completedCount: results.length,
       totalCount: this.config.domains.length
     };
@@ -175,14 +175,14 @@ export class ApiSpeedTester {
     const results = await this.testConcurrent();
 
     // 按响应时间排序，成功的排在前面
-    const sortedResults = results.sort((a, b) => {
+    results.sort((a, b) => {
       if (a.success && !b.success) return -1;
       if (!a.success && b.success) return 1;
       return a.responseTime - b.responseTime;
     });
 
-    this.printResults(sortedResults);
-    return sortedResults;
+    this.printResults(results);
+    return results;
   }
 
   /**
@@ -232,14 +232,14 @@ export class ApiSpeedTester {
       }
 
       // 按响应时间排序
-      const sortedResults = results.sort((a, b) => {
+      results.sort((a, b) => {
         if (a.success && !b.success) return -1;
         if (!a.success && b.success) return 1;
         return a.responseTime - b.responseTime;
       });
 
-      this.printResults(sortedResults);
-      return sortedResults;
+      this.printResults(results);
+      return results;
     });
 
     // 返回最快结果和所有结果的 Promise
