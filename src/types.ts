@@ -30,16 +30,3 @@ export interface ApiTestConfig {
   headers?: Record<string, string>;
 }
 
-/**
- * 测速结果接口
- */
-export interface ConcurrentTestResult {
-  /** 最快的成功结果 */
-  fastest: ApiTestResult | null;
-  /** 所有结果按响应时间排序 */
-  allResults: ApiTestResult[];
-  /** 完成的结果数量 */
-  completedCount: number;
-  /** 总数量 */
-  totalCount: number;
-}

@@ -1,5 +1,5 @@
 import axios, { AxiosResponse, AxiosError } from "axios";
-import { ApiTestResult, ApiTestConfig, ConcurrentTestResult } from "./types.js";
+import { ApiTestResult, ApiTestConfig } from "./types.js";
 
 /**
  * API 线路速度测试器
@@ -105,64 +105,6 @@ export class ApiSpeedTester {
   }
 
   /**
-   * 并发测试所有 API - 最快成功后立即返回，其他继续测试
-   *
-   * @param onFastestResult - 最快结果回调函数
-   * @returns 所有测试结果按响应时间排序
-   */
-  async testConcurrentWithFastest(
-    onFastestResult?: (result: ApiTestResult) => void
-  ): Promise<ConcurrentTestResult> {
-    const results: ApiTestResult[] = [];
-    let fastest: ApiTestResult | null = null;
-    let fastestReturned = false;
-
-    // 创建所有测试 Promise
-    const promises = this.config.domains.map(async (domain) => {
-      const result = await this.testSingleApi(domain);
-      results.push(result);
-
-      // 如果是第一个成功的结果且还没有返回最快结果
-      if (result.success && !fastest) {
-        fastest = result;
-        if (onFastestResult && !fastestReturned) {
-          fastestReturned = true;
-          onFastestResult(result);
-        }
-      }
-
-      return result;
-    });
-
-    // 等待所有测试完成
-    await Promise.allSettled(promises);
-
-    // 按响应时间排序，成功的排在前面
-    results.sort((a, b) => {
-      if (a.success && !b.success) return -1;
-      if (!a.success && b.success) return 1;
-      return a.responseTime - b.responseTime;
-    });
-
-    return {
-      fastest,
-      allResults: results,
-      completedCount: results.length,
-      totalCount: this.config.domains.length
-    };
-  }
-
-  /**
-   * 并发测试所有 API
-   *
-   * @returns 所有测试结果
-   */
-  private async testConcurrent(): Promise<ApiTestResult[]> {
-    const result = await this.testConcurrentWithFastest();
-    return result.allResults;
-  }
-
-  /**
    * 执行 API 速度测试
    *
    * @returns 测试结果，按响应时间排序
@@ -172,7 +114,17 @@ export class ApiSpeedTester {
     console.log(`📍 测试路径: ${this.config.testPath}`);
     console.log(`⏱️  超时时间: ${this.config.timeout}ms`);
 
-    const results = await this.testConcurrent();
+    const results: ApiTestResult[] = [];
+    
+    // 创建所有测试 Promise
+    const promises = this.config.domains.map(async (domain) => {
+      const result = await this.testSingleApi(domain);
+      results.push(result);
+      return result;
+    });
+
+    // 等待所有测试完成
+    await Promise.allSettled(promises);
 
     // 按响应时间排序，成功的排在前面
     results.sort((a, b) => {
@@ -250,7 +202,7 @@ export class ApiSpeedTester {
   }
 
   /**
-   * 获取最优线路（原有方法保持兼容性）
+   * 获取最优线路
    *
    * @returns 最优线路结果，如果没有可用线路则返回 null
    */
